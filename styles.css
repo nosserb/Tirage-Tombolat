@@ -67,7 +67,7 @@ kbd {
   display: inline-block;
   margin: 0 0.5rem;
   padding: 0.4rem 1rem;
-  border: 1px solid rgb(255 255 255 / 0.7);
+  border: 1px solid currentColor;
   border-radius: 0.5rem;
   font: inherit;
 }
@@ -272,15 +272,22 @@ kbd {
   text-transform: none;
 }
 
+/* Seule indication affichée : la demande de confirmation après un premier appui sur R. */
 .indication {
   position: absolute;
   bottom: var(--bas);
+  display: none;
   padding: 0.6rem 1.6rem;
   border-radius: 99rem;
+  background: var(--blanc);
+  color: var(--bleu-royal);
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: var(--bleu-glace);
+}
+
+[data-confirmation] .indication {
+  display: block;
 }
 
 .fin-merci {
@@ -299,35 +306,6 @@ kbd {
   font-weight: 700;
   letter-spacing: 0.3em;
   color: var(--bleu-glace);
-}
-
-/* L'indication affichée suit l'état de l'écran (data-etat) et la demande de confirmation. */
-[data-pour] {
-  display: none;
-}
-
-[data-etat="saisie"] [data-pour="saisie"],
-[data-etat="pret"] [data-pour="pret"],
-[data-etat="en-cours"] [data-pour="en-cours"],
-.fin [data-pour="repos"] {
-  display: inline;
-}
-
-[data-confirmation] [data-pour] {
-  display: none;
-}
-
-[data-confirmation] [data-pour="confirmation"] {
-  display: inline;
-}
-
-[data-confirmation] .indication {
-  background: var(--blanc);
-  color: var(--bleu-royal);
-}
-
-[data-confirmation] kbd {
-  border-color: currentColor;
 }
 
 .plage {
@@ -763,17 +741,6 @@ kbd {
 /* Même atténuée, la pastille blanche resterait lisible sous le titre du gagnant. */
 .palier.tirage .pastille {
   visibility: hidden;
-}
-
-.indication-tirage {
-  inset: auto 0 0.6rem;
-  width: fit-content;
-  margin-inline: auto;
-  text-transform: uppercase;
-}
-
-.palier.tirage .indication-tirage {
-  display: none;
 }
 
 .gagnant {
