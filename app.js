@@ -139,7 +139,6 @@ function construireAccueil() {
   saisie.value = dernierTicket ?? "";
   // La plage est figée dès le premier tirage pour que tous les paliers portent sur les mêmes tickets.
   saisie.disabled = gagnants.length > 0;
-  ecran.dataset.etat = gagnants.length > 0 ? "en-cours" : dernierTicket ? "pret" : "saisie";
 
   ecran.querySelector("form").addEventListener("submit", (evenement) => {
     evenement.preventDefault();
@@ -153,7 +152,6 @@ function construireAccueil() {
     dernierTicket = valeur;
     sauvegarder();
     saisie.blur();
-    ecran.dataset.etat = "pret";
   });
   return ecran;
 }
