@@ -1,6 +1,6 @@
 # Tombola Playground
 
-Présentation de la tombola de la soirée d'intégration Playground, à projeter en plein écran et à piloter au clavier.
+Présentation et tirage au sort de la tombola de la soirée d'intégration Playground, à projeter en plein écran et à piloter au clavier. Chaque palier désigne un ticket gagnant, et un ticket ne peut gagner qu'une fois.
 
 ## Lancer
 
@@ -14,17 +14,37 @@ python3 -m http.server 8000
 
 puis ouvrir http://localhost:8000.
 
+## Déroulement
+
+1. Sur l'accueil, saisir le dernier numéro de ticket vendu (les tickets en jeu vont de 1 à ce numéro) puis valider avec Entrée.
+2. Espace affiche le palier 1.
+3. Espace tire au sort le gagnant du palier 1.
+4. Espace passe au palier suivant, puis Espace tire son gagnant, et ainsi de suite.
+5. Après le dernier palier, l'écran de fin récapitule les tickets gagnants.
+
 ## Commandes
 
 | Touche | Action |
 | --- | --- |
-| Espace ou → | ticket suivant (sur le dernier ticket : écran de fin) |
-| ← | ticket précédent |
+| Entrée (dans la saisie) | valider la plage de tickets |
+| Espace ou → | tirer le gagnant du palier affiché, sinon passer à l'écran suivant |
+| ← | écran précédent (un gagnant déjà tiré est réaffiché, jamais retiré) |
 | F | activer ou quitter le plein écran |
 | Échap | quitter le plein écran (comportement du navigateur) |
-| R, deux fois, sur l'écran de fin | recommencer depuis l'accueil |
+| R, deux fois, sur l'écran de fin ou sur l'accueil | effacer les gagnants et recommencer |
 
-Les appuis pendant une transition sont ignorés, tout comme la répétition d'une touche maintenue.
+Les appuis pendant une transition ou un tirage sont ignorés, tout comme la répétition d'une touche maintenue. Tab permet de revenir dans la saisie pour corriger la plage tant qu'aucun gagnant n'a été tiré.
+
+## Tirage au sort
+
+- **Source du hasard** : `crypto.getRandomValues`, le générateur cryptographique du navigateur. Contrairement à `Math.random`, il n'a pas de graine et son résultat ne peut pas être prédit.
+- **Équité** : chaque ticket encore en jeu a exactement la même probabilité d'être tiré (1 sur le nombre de tickets restants). La conversion du nombre aléatoire en ticket rejette les valeurs qui introduiraient un biais (biais du modulo), aucun ticket n'est avantagé.
+- **Un seul gain par ticket** : avant chaque tirage, les gagnants des paliers précédents sont retirés. Le palier 2 est tiré parmi les tickets restants sans le gagnant du palier 1, le palier 3 sans les gagnants des paliers 1 et 2, etc. L'écran du gagnant indique le nombre de tickets en jeu et les numéros exclus.
+- **Moment du tirage** : le gagnant est tiré à l'instant où Espace est pressée sur le palier, pas à l'avance. Les numéros qui défilent ensuite ne sont qu'un effet de suspense : le résultat est déjà fixé et n'en dépend pas.
+- **Pas de nouveau tirage** : revenir en arrière réaffiche le gagnant déjà tiré. Le tirage est sauvegardé dans le navigateur (`localStorage`), donc un rechargement accidentel de la page conserve les gagnants et ne remet pas leurs tickets en jeu. Seul un double appui sur R efface le tirage.
+- **Traçabilité** : chaque tirage est aussi écrit dans la console du navigateur (F12), avec le nombre de tickets en jeu.
+
+La plage de tickets doit compter au moins autant de tickets que de paliers, et elle est verrouillée dès le premier tirage.
 
 ## Modifier les lots
 
