@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tombola Playground</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="paliers.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="fond" aria-hidden="true"></div>
+
+  <header class="entete entree">
+    <p class="marque">Playground <span class="badge">Tombola</span></p>
+    <p class="evenement">Soirée d’intégration · 29/10 · 17h30</p>
+  </header>
+
+  <main class="scene" aria-live="polite"></main>
+
+  <template id="modele-accueil">
+    <section class="accueil">
+      <div class="flash" aria-hidden="true"></div>
+      <div class="cercles" aria-hidden="true">
+        <span class="halo"></span>
+        <span class="anneau entree"></span>
+        <span class="anneau anneau-large entree" style="--rang: 2"></span>
+      </div>
+      <h1 class="accueil-titre">
+        <span class="accueil-marque entree" style="--rang: 1">Playground</span>
+        <span class="accueil-tombola entree" style="--rang: 2">La tombola</span>
+      </h1>
+      <hr class="separateur entree" style="--rang: 5">
+      <p class="accroche entree" style="--rang: 6">Les lots se débloquent un par un.</p>
+      <p class="indication entree" style="--rang: 9">Appuyer sur <kbd>Espace</kbd> pour commencer</p>
+    </section>
+  </template>
+
+  <template id="modele-palier">
+    <article class="palier">
+      <div class="flash" aria-hidden="true"></div>
+
+      <section class="palier-infos">
+        <p class="statut entree" data-champ="statut"></p>
+        <h2 class="palier-titre">
+          <span class="palier-mot entree" style="--rang: 1">Palier</span>
+          <span class="palier-numero entree" style="--rang: 2" data-champ="numero"></span>
+        </h2>
+        <hr class="separateur entree" style="--rang: 5">
+        <p class="lot-type entree" style="--rang: 6" data-champ="type"></p>
+        <h3 class="lot-nom entree" style="--rang: 7" data-champ="nom"></h3>
+        <p class="lot-description entree" style="--rang: 8" data-champ="description"></p>
+      </section>
+
+      <figure class="lot">
+        <span class="lot-halo entree" aria-hidden="true"></span>
+        <span class="lot-cercle entree" style="--rang: 1" aria-hidden="true"></span>
+        <img class="lot-image entree" style="--rang: 2" data-champ="image" alt="">
+        <p class="pastille entree" style="--rang: 8" data-champ="pastille">
+          <span></span><strong></strong><span></span>
+        </p>
+      </figure>
+
+      <aside class="progression">
+        <p class="etiquette entree" style="--rang: 3">Progression</p>
+        <p class="progression-titre entree" style="--rang: 4" data-champ="titre"></p>
+        <p class="progression-detail entree" style="--rang: 5" data-champ="detail"></p>
+        <div class="jauge entree" style="--rang: 5">
+          <ol class="jauge-echelle" data-champ="echelle"></ol>
+          <div class="jauge-tube">
+            <div class="jauge-remplissage entree" style="--rang: 6"></div>
+          </div>
+          <div class="jauge-niveau">
+            <p class="entree" style="--rang: 9" data-champ="pourcentage"></p>
+          </div>
+        </div>
+        <p class="progression-suite entree" style="--rang: 9" data-champ="suite"></p>
+      </aside>
+    </article>
+  </template>
+
+  <template id="modele-fin">
+    <section class="fin">
+      <div class="flash" aria-hidden="true"></div>
+      <div class="cercles" aria-hidden="true">
+        <span class="halo"></span>
+        <span class="anneau entree"></span>
+        <span class="anneau anneau-large entree" style="--rang: 2"></span>
+      </div>
+      <h2 class="fin-titre">
+        <span class="fin-merci entree" style="--rang: 1">Merci</span>
+        <span class="fin-suite entree" style="--rang: 4">pour votre participation</span>
+      </h2>
+      <hr class="separateur entree" style="--rang: 6">
+      <p class="fin-signature entree" style="--rang: 7">Playground · Tombola</p>
+      <p class="indication entree" style="--rang: 9">
+        <span class="indication-repos">Appuyer sur <kbd>R</kbd> pour recommencer</span>
+        <span class="indication-confirmation">Appuyer de nouveau sur <kbd>R</kbd> pour confirmer</span>
+      </p>
+    </section>
+  </template>
+</body>
+</html>
