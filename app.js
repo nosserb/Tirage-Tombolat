@@ -1,6 +1,6 @@
-const LIBELLES_STATUT = {
-  debloque: "Débloqué",
-  "en-cours": "En cours",
+const STATUTS = {
+  debloque: { libelle: "Débloqué", typeLot: "Lot débloqué" },
+  "en-cours": { libelle: "En cours", typeLot: "Lot à gagner" },
 };
 
 // Échelle de la jauge : 5 repères chiffrés subdivisés chacun en 5, comme sur les visuels de référence.
@@ -31,6 +31,56 @@ let enTransition = false;
 let dernierTicket = null;
 // gagnants[i] : ticket tiré pour PALIERS[i].
 let gagnants = [];
+// Nombre de tickets vendus lu dans le Google Sheet, null tant qu'il n'est pas connu.
+let ticketsVendus = null;
+
+/* Montant récolté
+
+   Le nombre de tickets vendus est lu dans le Google Sheet au chargement de la page et le montant
+   récolté vaut ce nombre multiplié par PRIX_TICKET. Si la feuille est injoignable, aucun montant
+   n'est affiché et les statuts de paliers.js s'appliquent tels quels. */
+
+// La feuille est lue par une balise <script> (réponse JSONP de Google) plutôt que par fetch :
+// Google refuse fetch depuis une page ouverte directement depuis le disque (file://).
+function chargerTicketsVendus() {
+  const { id, onglet, cellule } = GOOGLE_SHEET;
+  const parametres = new URLSearchParams({
+    tqx: "responseHandler:recevoirTicketsVendus",
+    sheet: onglet,
+    range: cellule,
+    headers: 0,
+  });
+  const script = document.createElement("script");
+  script.src = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?${parametres}`;
+  script.addEventListener("error", () => console.warn("Google Sheet injoignable : les montants récoltés ne sont pas affichés."));
+  document.head.append(script);
+}
+
+function recevoirTicketsVendus(reponse) {
+  const valeur = reponse.table?.rows[0]?.c[0]?.v;
+  if (!Number.isInteger(valeur) || valeur < 0) {
+    console.warn("Nombre de tickets vendus illisible dans le Google Sheet :", reponse);
+    return;
+  }
+  ticketsVendus = valeur;
+  console.info(`Google Sheet : ${valeur} tickets vendus, soit ${montantRecolte()} € récoltés.`);
+
+  // Pré-remplit la plage du tirage si l'accueil est affiché et que rien n'a encore été saisi.
+  const saisie = champ(scene, "dernier-ticket");
+  if (saisie && !saisie.disabled && saisie.value === "") saisie.value = valeur;
+}
+
+function montantRecolte() {
+  return ticketsVendus === null ? null : ticketsVendus * PRIX_TICKET;
+}
+
+// Un palier avec objectif est débloqué dès que le montant récolté l'atteint.
+// Sans objectif ou sans montant connu, le statut indiqué dans paliers.js s'applique.
+function statutPalier(palier) {
+  const collecte = montantRecolte();
+  if (palier.objectif === undefined || collecte === null) return palier.statut;
+  return collecte >= palier.objectif ? "debloque" : "en-cours";
+}
 
 /* Tirage au sort
 
@@ -96,7 +146,9 @@ function sauvegarder() {
 function restaurer() {
   try {
     const sauvegarde = JSON.parse(localStorage.getItem(CLE_SAUVEGARDE));
-    if (sauvegarde) ({ dernierTicket, gagnants } = sauvegarde);
+    // Seul un tirage commencé est restauré : avant le premier gagnant, la plage est ressaisie,
+    // pré-remplie avec le nombre de tickets vendus.
+    if (sauvegarde?.gagnants.length) ({ dernierTicket, gagnants } = sauvegarde);
   } catch (erreur) {
     console.warn("Lecture de la sauvegarde du tirage impossible :", erreur);
   }
@@ -136,7 +188,7 @@ function construireEcran(numeroEtape) {
 function construireAccueil() {
   const ecran = cloner("modele-accueil");
   const saisie = champ(ecran, "dernier-ticket");
-  saisie.value = dernierTicket ?? "";
+  saisie.value = dernierTicket ?? ticketsVendus ?? "";
   // La plage est figée dès le premier tirage pour que tous les paliers portent sur les mêmes tickets.
   saisie.disabled = gagnants.length > 0;
 
@@ -160,11 +212,12 @@ function construirePalier(indice) {
   const palier = PALIERS[indice];
   const ecran = cloner("modele-palier");
 
-  const statut = champ(ecran, "statut");
-  statut.textContent = LIBELLES_STATUT[palier.statut];
-  statut.dataset.statut = palier.statut;
+  const statut = statutPalier(palier);
+  const badgeStatut = champ(ecran, "statut");
+  badgeStatut.textContent = STATUTS[statut].libelle;
+  badgeStatut.dataset.statut = statut;
   champ(ecran, "numero").textContent = numeroPalier(palier);
-  champ(ecran, "type").textContent = palier.type;
+  champ(ecran, "type").textContent = STATUTS[statut].typeLot;
   champ(ecran, "nom").textContent = palier.nom;
   champ(ecran, "description").textContent = palier.description;
 
@@ -178,11 +231,11 @@ function construirePalier(indice) {
   image.src = palier.image;
 
   const pastille = champ(ecran, "pastille");
-  const lignes = lignesPastille(palier);
+  const lignes = lignesPastille(palier, statut);
   if (lignes) lignes.forEach((texte, index) => (pastille.children[index].textContent = texte));
   else pastille.remove();
 
-  remplirProgression(ecran, palier);
+  remplirProgression(ecran, palier, statut);
 
   // Un palier déjà tiré réaffiche son gagnant : revenir en arrière ne relance jamais un tirage.
   champ(ecran, "gagnant-palier").textContent = numeroPalier(palier);
@@ -219,39 +272,36 @@ function construireFin() {
   return ecran;
 }
 
-function lignesPastille(palier) {
+function lignesPastille(palier, statut) {
   if (palier.offertPar) return ["Offert par", palier.offertPar, ""];
-  if (palier.statut === "debloque" && palier.progression) {
-    return ["Objectif", euros(palier.progression.objectif), "atteint"];
-  }
+  if (statut === "debloque" && palier.objectif) return ["Objectif", euros(palier.objectif), "atteint"];
   return null;
 }
 
-function remplirProgression(ecran, palier) {
-  const { statut, progression, offertPar, prochainObjectif } = palier;
+function remplirProgression(ecran, palier, statut) {
+  const { objectif, offertPar, prochainObjectif } = palier;
+  const collecte = montantRecolte();
   const valide = statut === "debloque";
+  const chiffree = objectif !== undefined && collecte !== null;
 
   const titre = champ(ecran, "titre");
   const detail = champ(ecran, "detail");
   if (valide) {
     titre.textContent = "Validé";
     if (offertPar) detail.textContent = `Offert par ${offertPar}`;
-    else if (progression) detail.textContent = `${euros(progression.collecte)} récoltés`;
-  } else if (progression) {
-    titre.replaceChildren(
-      euros(progression.collecte),
-      element("span", `/ ${euros(progression.objectif)}`, "progression-objectif"),
-    );
+    else if (chiffree) detail.textContent = `${euros(collecte)} récoltés`;
+  } else if (chiffree) {
+    titre.replaceChildren(euros(collecte), element("span", `/ ${euros(objectif)}`, "progression-objectif"));
     detail.textContent = "récoltés";
   } else {
-    titre.textContent = LIBELLES_STATUT[statut];
+    titre.textContent = STATUTS[statut].libelle;
   }
   if (!detail.textContent) detail.remove();
 
-  // Sans montants connus, un palier en cours n'affiche pas de jauge : on n'invente pas de progression.
+  // Sans montant connu, un palier en cours n'affiche pas de jauge : on n'invente pas de progression.
   let niveau = null;
   if (valide) niveau = 1;
-  else if (progression) niveau = Math.min(progression.collecte / progression.objectif, 1);
+  else if (chiffree) niveau = Math.min(collecte / objectif, 1);
 
   const jauge = ecran.querySelector(".jauge");
   if (niveau === null) {
@@ -259,11 +309,11 @@ function remplirProgression(ecran, palier) {
   } else {
     jauge.style.setProperty("--niveau", niveau);
     champ(ecran, "pourcentage").textContent = `${Math.round(niveau * 100)}%`;
-    if (progression) champ(ecran, "echelle").append(...graduations(progression.objectif));
+    if (objectif !== undefined) champ(ecran, "echelle").append(...graduations(objectif));
   }
 
   const suite = champ(ecran, "suite");
-  const reste = progression ? progression.objectif - progression.collecte : 0;
+  const reste = chiffree ? objectif - collecte : 0;
   if (!valide && reste > 0) {
     suite.append("Encore ", element("strong", `${nombre.format(reste)} €`), " pour débloquer ");
     if (prochainObjectif) suite.append("le ", element("strong", prochainObjectif));
@@ -340,6 +390,7 @@ function demanderEffacement() {
   }
   sansInterruption(() => {
     gagnants = [];
+    dernierTicket = null;
     sauvegarder();
     return afficher(0);
   });
@@ -379,3 +430,4 @@ for (const palier of PALIERS) new Image().src = palier.image;
 
 restaurer();
 afficherEcran();
+chargerTicketsVendus();
