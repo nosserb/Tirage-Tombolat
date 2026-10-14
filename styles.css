@@ -284,13 +284,13 @@ kbd {
 }
 
 .fin-merci {
-  font-size: 15rem;
+  font-size: 10rem;
 }
 
 .fin-suite {
   display: block;
-  margin-top: 1.6rem;
-  font-size: 3.6rem;
+  margin-top: 1.4rem;
+  font-size: 3rem;
   font-weight: 800;
 }
 
@@ -301,27 +301,113 @@ kbd {
   color: var(--bleu-glace);
 }
 
-.indication-confirmation,
-.fin[data-confirmation] .indication-repos {
+/* L'indication affichée suit l'état de l'écran (data-etat) et la demande de confirmation. */
+[data-pour] {
   display: none;
 }
 
-.fin[data-confirmation] .indication-confirmation {
+[data-etat="saisie"] [data-pour="saisie"],
+[data-etat="pret"] [data-pour="pret"],
+[data-etat="en-cours"] [data-pour="en-cours"],
+.fin [data-pour="repos"] {
   display: inline;
 }
 
-.fin[data-confirmation] .indication {
+[data-confirmation] [data-pour] {
+  display: none;
+}
+
+[data-confirmation] [data-pour="confirmation"] {
+  display: inline;
+}
+
+[data-confirmation] .indication {
   background: var(--blanc);
   color: var(--bleu-royal);
 }
 
-.fin[data-confirmation] kbd {
+[data-confirmation] kbd {
   border-color: currentColor;
+}
+
+.plage {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-top: 3rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.plage input {
+  width: 4.5em;
+  padding: 0 0 0.3rem;
+  border: 0;
+  border-bottom: 0.2rem solid rgb(255 255 255 / 0.6);
+  outline: none;
+  background: transparent;
+  color: var(--blanc);
+  font: inherit;
+  font-size: 3.4rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-align: center;
+  caret-color: var(--bleu-glace);
+  cursor: text;
+}
+
+.plage input:focus {
+  border-bottom-color: var(--blanc);
+}
+
+.plage input:disabled {
+  border-bottom-color: transparent;
+  color: var(--blanc);
+  -webkit-text-fill-color: var(--blanc);
+}
+
+.plage-erreur {
+  min-height: 1.6rem;
+  margin-top: 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.palmares {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.palmares .ticket {
+  --encoche: 1rem;
+  min-width: 17rem;
+  padding: 1.3rem 2.8rem 1.5rem;
+}
+
+.palmares span {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.palmares strong {
+  font-size: 3.6rem;
+  font-weight: 900;
+  line-height: 1.05;
 }
 
 /* Palier */
 
 .palier {
+  position: relative;
   height: 100%;
   padding: 1.6rem 0 var(--bas);
   display: grid;
@@ -659,6 +745,170 @@ kbd {
   font-weight: 800;
 }
 
+/* Tirage du gagnant : le palier passe au second plan et le ticket gagnant s'affiche par-dessus. */
+
+.palier-infos,
+.lot,
+.progression {
+  transition:
+    opacity var(--duree-sortie) ease-out,
+    scale var(--duree-sortie) ease-out;
+}
+
+.palier.tirage :is(.palier-infos, .lot, .progression) {
+  opacity: 0.12;
+  scale: 0.97;
+}
+
+/* Même atténuée, la pastille blanche resterait lisible sous le titre du gagnant. */
+.palier.tirage .pastille {
+  visibility: hidden;
+}
+
+.indication-tirage {
+  inset: auto 0 0.6rem;
+  width: fit-content;
+  margin-inline: auto;
+  text-transform: uppercase;
+}
+
+.palier.tirage .indication-tirage {
+  display: none;
+}
+
+.gagnant {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.palier.tirage .gagnant {
+  display: flex;
+}
+
+.gagnant::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44rem;
+  aspect-ratio: 1;
+  margin: -22rem 0 0 -22rem;
+  border: 2px solid rgb(200 220 255 / 0.8);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gagnant::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgb(150 195 255 / 0.5), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.revele .gagnant::before {
+  animation: onde 1s var(--courbe-entree);
+}
+
+.revele .gagnant::after {
+  animation: flash var(--duree-flash) ease-out;
+}
+
+.gagnant-titre {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--bleu-glace);
+}
+
+.ticket-cadre {
+  margin: 2.2rem 0 2.6rem;
+  filter: drop-shadow(0 0 3rem rgb(170 205 255 / 0.55));
+  --effet: zoom;
+}
+
+/* Ticket de tombola : fond blanc, encoches sur les côtés et ligne de découpe pointillée. */
+.ticket {
+  --encoche: 2.4rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--blanc);
+  color: var(--bleu-royal);
+  text-transform: uppercase;
+  border-radius: 1.6rem;
+  mask:
+    radial-gradient(circle at 0 50%, transparent var(--encoche), #000 calc(var(--encoche) + 1px)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, transparent var(--encoche), #000 calc(var(--encoche) + 1px)) right / 51% 100% no-repeat;
+}
+
+.ticket::before {
+  content: "";
+  position: absolute;
+  inset: 0.7rem calc(var(--encoche) + 0.8rem);
+  border: 0.15rem dashed rgb(10 46 199 / 0.3);
+  border-radius: 1rem;
+}
+
+.gagnant .ticket {
+  min-width: 50rem;
+  padding: 2.6rem 6rem 2.4rem;
+}
+
+.ticket-libelle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+
+.ticket-numero {
+  font-size: 14rem;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.palier.tirage:not(.revele) .ticket-numero {
+  opacity: 0.45;
+}
+
+.revele .ticket-numero {
+  animation: impact 600ms var(--courbe-rebond);
+}
+
+.gagnant-lot {
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.gagnant-tirage {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--bleu-glace);
+  text-transform: none;
+}
+
+.palier:not(.revele) .apres-tirage {
+  visibility: hidden;
+}
+
+.revele .apres-tirage {
+  animation: monte var(--duree-entree) var(--courbe-entree) both;
+  animation-delay: calc(var(--rang, 0) * var(--intervalle));
+}
+
 /* Animations */
 
 @keyframes monte {
@@ -735,6 +985,23 @@ kbd {
   }
 }
 
+@keyframes impact {
+  from {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes onde {
+  from {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
 @keyframes derive {
   to {
     transform: translate(12rem, 8rem) scale(1.15);
@@ -760,8 +1027,15 @@ kbd {
   .flash,
   .halo,
   .fond::before,
-  .fond::after {
+  .fond::after,
+  .revele .ticket-numero,
+  .revele .gagnant::before,
+  .revele .gagnant::after {
     animation: none;
+  }
+
+  .revele .apres-tirage {
+    animation-name: fondu;
   }
 
   @keyframes fondu-sortie {
