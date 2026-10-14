@@ -77,3 +77,5 @@ Les images des lots sont dans `assets/lots/`, référencées par le champ `image
 ## Police
 
 Montserrat, sous licence SIL Open Font License (`assets/fonts/OFL.txt`).
+
+
