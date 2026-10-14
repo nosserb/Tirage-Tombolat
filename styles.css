@@ -1,0 +1,1103 @@
+@font-face {
+  font-family: "Montserrat";
+  src: url("assets/fonts/montserrat-latin.woff2") format("woff2");
+  font-weight: 500 900;
+  font-display: block;
+}
+
+:root {
+  --bleu-royal: #0a2ec7;
+  --bleu-electrique: #2c62fb;
+  --bleu-glace: #dce8ff;
+  --blanc: #fff;
+  --trait: rgb(255 255 255 / 0.22);
+  --lueur: 0 0 3rem rgb(150 190 255 / 0.65);
+
+  --marge: 5rem;
+  --entete: 6.8rem;
+  --bas: 3.8rem;
+
+  --courbe-entree: cubic-bezier(0.16, 1, 0.3, 1);
+  --courbe-rebond: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duree-entree: 550ms;
+  --duree-sortie: 220ms;
+  --duree-flash: 700ms;
+  --intervalle: 50ms;
+  --duree-ambiance: 18s;
+  --duree-respiration: 5s;
+}
+
+/* 1rem = 1 % de la largeur du plus grand cadre 16:9 qui tient dans la fenêtre.
+   Toute la mise en page est exprimée dans cette unité : les proportions des visuels
+   de référence sont conservées sur n'importe quel écran, sans débordement. */
+html {
+  font-size: min(1vw, 16vh / 9);
+  overflow: hidden;
+  cursor: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Les halos débordent volontairement de leur zone : body les rogne à la taille de l'écran. */
+body {
+  position: relative;
+  margin: 0;
+  height: 100vh;
+  overflow: clip;
+  background: var(--bleu-royal);
+  color: var(--blanc);
+  font-family: "Montserrat", system-ui, sans-serif;
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+figure {
+  margin: 0;
+}
+
+kbd {
+  display: inline-block;
+  margin: 0 0.5rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid rgb(255 255 255 / 0.7);
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+/* Fond */
+
+.fond {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(4 19 122 / 0.55)),
+    radial-gradient(60% 70% at 50% 50%, var(--bleu-electrique), transparent 70%),
+    linear-gradient(165deg, #0c34d8, var(--bleu-royal) 55%, #0826b0);
+}
+
+.fond::before,
+.fond::after {
+  content: "";
+  position: absolute;
+  width: 70rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(120 170 255 / 0.3), transparent);
+  animation: derive var(--duree-ambiance) ease-in-out infinite alternate;
+}
+
+.fond::before {
+  top: -25rem;
+  left: -15rem;
+}
+
+.fond::after {
+  right: -15rem;
+  bottom: -30rem;
+  animation-delay: calc(var(--duree-ambiance) / -2);
+}
+
+/* En-tête commun à tous les écrans */
+
+.entete {
+  position: absolute;
+  inset: 0 var(--marge) auto;
+  height: var(--entete);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--trait);
+  text-transform: uppercase;
+}
+
+.marque {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.badge {
+  padding: 0.35rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 0.8);
+  border-radius: 99rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.evenement {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+/* Scène et transitions */
+
+.scene {
+  position: absolute;
+  inset: var(--entete) var(--marge) 0;
+  isolation: isolate;
+}
+
+.scene.sortie {
+  animation: sortie var(--duree-sortie) ease-in forwards;
+}
+
+.entree {
+  animation: var(--effet, monte) var(--duree-entree) var(--courbe-entree) both;
+  animation-delay: calc(var(--rang, 0) * var(--intervalle));
+}
+
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgb(150 195 255 / 0.5), transparent 70%);
+  opacity: 0;
+  animation: flash var(--duree-flash) ease-out;
+}
+
+.separateur {
+  width: 3.8rem;
+  height: 0.3rem;
+  margin: 2.4rem 0 2.2rem;
+  border: 0;
+  border-radius: 0.2rem;
+  background: var(--blanc);
+  transform-origin: left;
+  --effet: trait;
+}
+
+/* Accueil et fin */
+
+.accueil,
+.fin {
+  position: relative;
+  height: 100%;
+  padding-bottom: var(--bas);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.accueil .separateur,
+.fin .separateur {
+  margin-inline: auto;
+  transform-origin: center;
+}
+
+.cercles {
+  position: absolute;
+  inset: 0 0 var(--bas);
+  z-index: -1;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  pointer-events: none;
+}
+
+.cercles > * {
+  grid-area: 1 / 1;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.halo {
+  width: 72rem;
+  background: radial-gradient(closest-side, rgb(130 180 255 / 0.5), rgb(60 110 255 / 0.2) 60%, transparent);
+  animation:
+    fondu var(--duree-entree) ease-out both,
+    respire var(--duree-respiration) ease-in-out var(--duree-entree) infinite alternate;
+}
+
+.anneau {
+  width: 40rem;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  --effet: cercle;
+}
+
+.anneau-large {
+  width: 54rem;
+  border-color: rgb(255 255 255 / 0.12);
+}
+
+.accueil-titre,
+.fin-titre {
+  line-height: 0.9;
+}
+
+.accueil-marque {
+  display: block;
+  margin-right: -0.32em;
+  font-size: 4.6rem;
+  font-weight: 800;
+  letter-spacing: 0.32em;
+  color: var(--bleu-glace);
+}
+
+.accueil-tombola,
+.fin-merci {
+  display: block;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 5rem rgb(150 195 255 / 0.7);
+  --effet: surgit;
+  --duree-entree: 800ms;
+}
+
+.accueil-tombola {
+  margin-top: 1.2rem;
+  font-size: 12rem;
+}
+
+.accroche {
+  font-size: 2.1rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.indication {
+  position: absolute;
+  bottom: var(--bas);
+  padding: 0.6rem 1.6rem;
+  border-radius: 99rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--bleu-glace);
+}
+
+.fin-merci {
+  font-size: 10rem;
+}
+
+.fin-suite {
+  display: block;
+  margin-top: 1.4rem;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.fin-signature {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--bleu-glace);
+}
+
+/* L'indication affichée suit l'état de l'écran (data-etat) et la demande de confirmation. */
+[data-pour] {
+  display: none;
+}
+
+[data-etat="saisie"] [data-pour="saisie"],
+[data-etat="pret"] [data-pour="pret"],
+[data-etat="en-cours"] [data-pour="en-cours"],
+.fin [data-pour="repos"] {
+  display: inline;
+}
+
+[data-confirmation] [data-pour] {
+  display: none;
+}
+
+[data-confirmation] [data-pour="confirmation"] {
+  display: inline;
+}
+
+[data-confirmation] .indication {
+  background: var(--blanc);
+  color: var(--bleu-royal);
+}
+
+[data-confirmation] kbd {
+  border-color: currentColor;
+}
+
+.plage {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-top: 3rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.plage input {
+  width: 4.5em;
+  padding: 0 0 0.3rem;
+  border: 0;
+  border-bottom: 0.2rem solid rgb(255 255 255 / 0.6);
+  outline: none;
+  background: transparent;
+  color: var(--blanc);
+  font: inherit;
+  font-size: 3.4rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-align: center;
+  caret-color: var(--bleu-glace);
+  cursor: text;
+}
+
+.plage input:focus {
+  border-bottom-color: var(--blanc);
+}
+
+.plage input:disabled {
+  border-bottom-color: transparent;
+  color: var(--blanc);
+  -webkit-text-fill-color: var(--blanc);
+}
+
+.plage-erreur {
+  min-height: 1.6rem;
+  margin-top: 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.palmares {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.palmares .ticket {
+  --encoche: 1rem;
+  min-width: 17rem;
+  padding: 1.3rem 2.8rem 1.5rem;
+}
+
+.palmares span {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.palmares strong {
+  font-size: 3.6rem;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+/* Palier */
+
+.palier {
+  position: relative;
+  height: 100%;
+  padding: 1.6rem 0 var(--bas);
+  display: grid;
+  grid-template-columns: 25rem minmax(0, 1fr) 20.5rem;
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 2rem;
+  align-items: center;
+}
+
+.statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: 99rem;
+  background: var(--blanc);
+  color: var(--bleu-royal);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 0 2rem rgb(160 195 255 / 0.45);
+}
+
+.statut::before {
+  content: "";
+}
+
+.statut[data-statut="debloque"]::before {
+  width: 0.45rem;
+  height: 0.8rem;
+  border: solid currentColor;
+  border-width: 0 0.2rem 0.2rem 0;
+  transform: translateY(-0.1rem) rotate(45deg);
+}
+
+.statut[data-statut="en-cours"]::before {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.palier-titre {
+  margin-top: 1.4rem;
+  font-weight: 800;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.palier-mot {
+  display: block;
+  font-size: 5.2rem;
+}
+
+.palier-numero {
+  display: block;
+  font-size: 15rem;
+  font-weight: 900;
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 4rem rgb(160 200 255 / 0.7);
+  --effet: surgit;
+  --duree-entree: 750ms;
+}
+
+.lot-type {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bleu-glace);
+}
+
+.lot-nom {
+  margin-top: 0.6rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.lot-description {
+  margin-top: 0.7rem;
+  font-size: 1.3rem;
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.9);
+}
+
+/* La piste unique est figée à la taille du bloc : le halo, plus grand, déborde sans décentrer l'image. */
+.lot {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+}
+
+.lot > * {
+  grid-area: 1 / 1;
+}
+
+.lot-halo {
+  width: 52rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(140 185 255 / 0.55), rgb(60 110 255 / 0.25) 55%, transparent);
+  --effet: fondu;
+  --duree-entree: 800ms;
+}
+
+.lot-cercle {
+  width: 34rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  box-shadow: inset 0 0 3rem rgb(160 200 255 / 0.15);
+  --effet: cercle;
+}
+
+.lot-image {
+  width: 100%;
+  height: 100%;
+  max-height: 42rem;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 1.2rem rgb(200 220 255 / 0.35))
+    drop-shadow(0 2.5rem 2.5rem rgb(2 10 70 / 0.55));
+  --effet: zoom;
+  --duree-entree: 750ms;
+}
+
+.pastille {
+  position: absolute;
+  top: calc(50% - 19rem);
+  left: calc(50% + 8rem);
+  width: 10.5rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--blanc);
+  color: var(--bleu-royal);
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 0 0.7rem rgb(255 255 255 / 0.18),
+    0 0 3.5rem rgb(170 205 255 / 0.7);
+  --effet: pastille;
+  --courbe-entree: var(--courbe-rebond);
+}
+
+.pastille::before {
+  content: "";
+  position: absolute;
+  inset: 0.55rem;
+  border: 0.12rem dashed rgb(10 46 199 / 0.45);
+  border-radius: 50%;
+}
+
+.pastille span {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.pastille strong {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.15;
+  text-transform: none;
+}
+
+.pastille span:empty {
+  display: none;
+}
+
+/* Panneau de progression */
+
+.progression {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  padding: 1.6rem 0 0 2.2rem;
+  border-left: 1px solid var(--trait);
+}
+
+.etiquette {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bleu-glace);
+}
+
+.progression-titre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 4.4rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-shadow: var(--lueur);
+}
+
+.progression-objectif {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: rgb(255 255 255 / 0.8);
+  text-shadow: none;
+}
+
+.progression-detail {
+  margin-top: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.jauge {
+  --tube-marge: 0.4rem;
+  flex: 1;
+  min-height: 0;
+  margin: 2.4rem 0;
+  display: grid;
+  grid-template-columns: 3.8rem 4rem 1fr;
+  column-gap: 0.9rem;
+  --effet: fondu;
+}
+
+.jauge-echelle,
+.jauge-niveau {
+  position: relative;
+  margin: var(--tube-marge) 0;
+}
+
+.jauge-echelle {
+  padding: 0;
+  list-style: none;
+}
+
+.jauge-echelle li {
+  position: absolute;
+  right: 0;
+  bottom: calc(var(--position) * 100%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(50%);
+}
+
+.jauge-echelle li::after {
+  content: "";
+  width: 0.5rem;
+  height: 1px;
+  background: rgb(255 255 255 / 0.5);
+}
+
+.jauge-echelle li:not(:empty)::after {
+  width: 1rem;
+  background: var(--blanc);
+}
+
+.jauge-tube {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--tube-marge);
+  border-radius: 1.2rem;
+  background: linear-gradient(90deg, rgb(8 30 150 / 0.55), rgb(30 70 220 / 0.45));
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.4),
+    0 0 2.5rem rgb(140 185 255 / 0.35);
+}
+
+.jauge-tube::after {
+  content: "";
+  position: absolute;
+  inset: 1.2rem auto 1.2rem 0.9rem;
+  width: 1px;
+  background: rgb(255 255 255 / 0.35);
+}
+
+.jauge-remplissage {
+  width: 100%;
+  height: calc(var(--niveau) * 100%);
+  border-radius: 0.8rem;
+  background: linear-gradient(#f4f8ff, #b9d0ff 45%, #6f9bff);
+  box-shadow: 0 0 1.5rem rgb(190 215 255 / 0.6);
+  transform-origin: bottom;
+  --effet: remplit;
+  --duree-entree: 700ms;
+}
+
+.jauge-niveau p {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--niveau) * 100%);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: var(--lueur);
+  transform: translateY(50%);
+  --effet: fondu;
+}
+
+.jauge-niveau p::before {
+  content: "";
+  width: 1rem;
+  height: 2px;
+  background: var(--blanc);
+}
+
+.progression-suite {
+  margin-top: auto;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--trait);
+  font-size: 1.2rem;
+  line-height: 1.45;
+}
+
+.progression-suite strong {
+  font-weight: 800;
+}
+
+/* Tirage du gagnant : le palier passe au second plan et le ticket gagnant s'affiche par-dessus. */
+
+.palier-infos,
+.lot,
+.progression {
+  transition:
+    opacity var(--duree-sortie) ease-out,
+    scale var(--duree-sortie) ease-out;
+}
+
+.palier.tirage :is(.palier-infos, .lot, .progression) {
+  opacity: 0.12;
+  scale: 0.97;
+}
+
+/* Même atténuée, la pastille blanche resterait lisible sous le titre du gagnant. */
+.palier.tirage .pastille {
+  visibility: hidden;
+}
+
+.indication-tirage {
+  inset: auto 0 0.6rem;
+  width: fit-content;
+  margin-inline: auto;
+  text-transform: uppercase;
+}
+
+.palier.tirage .indication-tirage {
+  display: none;
+}
+
+.gagnant {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.palier.tirage .gagnant {
+  display: flex;
+}
+
+.gagnant::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44rem;
+  aspect-ratio: 1;
+  margin: -22rem 0 0 -22rem;
+  border: 2px solid rgb(200 220 255 / 0.8);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gagnant::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgb(150 195 255 / 0.5), transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.revele .gagnant::before {
+  animation: onde 1s var(--courbe-entree);
+}
+
+.revele .gagnant::after {
+  animation: flash var(--duree-flash) ease-out;
+}
+
+.gagnant-titre {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--bleu-glace);
+}
+
+.ticket-cadre {
+  margin: 2.2rem 0 2.6rem;
+  filter: drop-shadow(0 0 3rem rgb(170 205 255 / 0.55));
+  --effet: zoom;
+}
+
+/* Ticket de tombola : fond blanc, encoches sur les côtés et ligne de découpe pointillée. */
+.ticket {
+  --encoche: 2.4rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--blanc);
+  color: var(--bleu-royal);
+  text-transform: uppercase;
+  border-radius: 1.6rem;
+  mask:
+    radial-gradient(circle at 0 50%, transparent var(--encoche), #000 calc(var(--encoche) + 1px)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, transparent var(--encoche), #000 calc(var(--encoche) + 1px)) right / 51% 100% no-repeat;
+}
+
+.ticket::before {
+  content: "";
+  position: absolute;
+  inset: 0.7rem calc(var(--encoche) + 0.8rem);
+  border: 0.15rem dashed rgb(10 46 199 / 0.3);
+  border-radius: 1rem;
+}
+
+.gagnant .ticket {
+  min-width: 50rem;
+  padding: 2.6rem 6rem 2.4rem;
+}
+
+.ticket-libelle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+
+.ticket-numero {
+  font-size: 14rem;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.palier.tirage:not(.revele) .ticket-numero {
+  opacity: 0.45;
+}
+
+.revele .ticket-numero {
+  animation: impact 600ms var(--courbe-rebond);
+}
+
+.gagnant-lot {
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.gagnant-tirage {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--bleu-glace);
+  text-transform: none;
+}
+
+.palier:not(.revele) .apres-tirage {
+  visibility: hidden;
+}
+
+.revele .apres-tirage {
+  animation: monte var(--duree-entree) var(--courbe-entree) both;
+  animation-delay: calc(var(--rang, 0) * var(--intervalle));
+}
+
+/* Animations */
+
+@keyframes monte {
+  from {
+    opacity: 0;
+    transform: translateY(1.6rem);
+  }
+}
+
+@keyframes fondu {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Le texte sort d'une fente : il monte pendant que le masque s'ouvre vers le bas,
+   ce qui laisse la lueur intacte une fois l'animation terminée. La lueur s'allume
+   pendant la montée pour que le bord du masque ne la coupe pas net. */
+@keyframes surgit {
+  from {
+    transform: translateY(70%);
+    clip-path: inset(-50% -50% 70% -50%);
+    text-shadow: 0 0 0 transparent;
+  }
+  to {
+    transform: none;
+    clip-path: inset(-50%);
+  }
+}
+
+@keyframes trait {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes cercle {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes zoom {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.9);
+  }
+}
+
+@keyframes pastille {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+  }
+}
+
+@keyframes remplit {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes flash {
+  25% {
+    opacity: 1;
+  }
+}
+
+@keyframes sortie {
+  to {
+    opacity: 0;
+    transform: translateY(-1.5rem) scale(0.985);
+  }
+}
+
+@keyframes impact {
+  from {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes onde {
+  from {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+@keyframes derive {
+  to {
+    transform: translate(12rem, 8rem) scale(1.15);
+  }
+}
+
+@keyframes respire {
+  to {
+    opacity: 0.6;
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entree {
+    animation-name: fondu;
+  }
+
+  .scene.sortie {
+    animation-name: fondu-sortie;
+  }
+
+  .flash,
+  .halo,
+  .fond::before,
+  .fond::after,
+  .revele .ticket-numero,
+  .revele .gagnant::before,
+  .revele .gagnant::after {
+    animation: none;
+  }
+
+  .revele .apres-tirage {
+    animation-name: fondu;
+  }
+
+  @keyframes fondu-sortie {
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+/* Écran vertical (téléphone, tablette) : les colonnes s'empilent et la page défile. */
+@media (orientation: portrait) {
+  html {
+    font-size: 2.2vw;
+    overflow: auto;
+  }
+
+  body {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .entete {
+    position: static;
+    height: auto;
+    margin: 0 var(--marge);
+    padding: 3rem 0;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .scene {
+    position: relative;
+    inset: auto;
+    margin: 0 var(--marge);
+  }
+
+  .accueil,
+  .fin {
+    min-height: 80vh;
+  }
+
+  .palier {
+    height: auto;
+    padding-top: 4rem;
+    grid-template-columns: 1fr;
+    row-gap: 4rem;
+  }
+
+  .lot {
+    height: 55rem;
+  }
+
+  .progression {
+    padding: 3rem 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--trait);
+  }
+
+  .jauge {
+    flex: none;
+    height: 36rem;
+  }
+}
