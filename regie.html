@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Régie · Tombola Playground</title>
+  <link rel="stylesheet" href="regie.css">
+  <script src="paliers.js" defer></script>
+  <script src="regie.js" defer></script>
+</head>
+<body>
+  <header class="barre">
+    <h1 class="titre">Régie <span>Tombola Playground</span></h1>
+    <div class="projection">
+      <p class="projection-etat" data-champ="etat-ecran" role="status"></p>
+      <button type="button" class="bouton" data-champ="ouvrir-ecran">Ouvrir l’écran de projection</button>
+    </div>
+  </header>
+
+  <main class="moniteurs">
+    <section class="moniteur" aria-labelledby="titre-apercu">
+      <h2 class="etiquette" id="titre-apercu">Aperçu</h2>
+      <iframe class="moniteur-cadre" title="Aperçu de la scène choisie" data-champ="cadre-apercu" tabindex="-1"></iframe>
+      <p class="moniteur-legende" data-champ="legende-apercu"></p>
+    </section>
+
+    <button type="button" class="passer-direct" data-champ="passer-direct">Passer en direct</button>
+
+    <section class="moniteur moniteur-direct" aria-labelledby="titre-direct">
+      <h2 class="etiquette" id="titre-direct">Direct</h2>
+      <iframe class="moniteur-cadre" title="Scène projetée" data-champ="cadre-direct" tabindex="-1"></iframe>
+      <p class="moniteur-legende" data-champ="legende-direct"></p>
+    </section>
+  </main>
+
+  <section class="dock" aria-labelledby="titre-scenes">
+    <div class="dock-entete">
+      <h2 class="etiquette" id="titre-scenes">Scènes</h2>
+      <p class="dock-aide">Tirage sur papier : saisir le ticket puis Entrée pour afficher le gagnant dans l’aperçu.</p>
+    </div>
+    <ol class="scenes" data-champ="scenes"></ol>
+  </section>
+
+  <template id="modele-scene">
+    <button type="button" class="scene" aria-pressed="false">
+      <span class="scene-nom" data-champ="nom"></span>
+      <span class="scene-info" data-champ="info"></span>
+      <span class="scene-direct" data-champ="direct" hidden>Direct</span>
+    </button>
+  </template>
+
+  <template id="modele-palier">
+    <li class="palier">
+      <form class="ticket" novalidate>
+        <label class="ticket-saisie">
+          <span>Ticket n°</span>
+          <input data-champ="ticket" inputmode="numeric" autocomplete="off">
+        </label>
+      </form>
+      <p class="ticket-erreur" data-champ="erreur" role="alert"></p>
+    </li>
+  </template>
+</body>
+</html>

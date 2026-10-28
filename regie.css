@@ -1,0 +1,364 @@
+@font-face {
+  font-family: "Montserrat";
+  src: url("assets/fonts/montserrat-latin.woff2") format("woff2");
+  font-weight: 500 900;
+}
+
+/* Interface sombre de régie, comme OBS : le bleu de la tombola marque l'aperçu,
+   le rouge « à l'antenne » marque ce qui est projeté. */
+:root {
+  color-scheme: dark;
+  --fond: #060a1c;
+  --panneau: #0d1430;
+  --panneau-clair: #151e45;
+  --bordure: rgb(255 255 255 / 0.1);
+  --bordure-forte: rgb(255 255 255 / 0.28);
+  --texte: #eef2ff;
+  --texte-doux: #97a3cc;
+  --apercu: #2c62fb;
+  --direct: #ec3a46;
+  --ouvert: #3fd68a;
+  --erreur: #ff8a90;
+  --rayon: 10px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 16px 20px 20px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  background: var(--fond);
+  color: var(--texte);
+  font: 500 15px/1.4 "Montserrat", system-ui, sans-serif;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--texte);
+  outline-offset: 2px;
+}
+
+.etiquette {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texte-doux);
+}
+
+/* Barre du haut */
+
+.barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.titre {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.titre span {
+  margin-left: 8px;
+  font-weight: 600;
+  color: var(--texte-doux);
+}
+
+.projection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.projection-etat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texte-doux);
+}
+
+.projection-etat::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.projection-etat[data-etat="ouvert"] {
+  color: var(--ouvert);
+}
+
+.bouton {
+  padding: 9px 16px;
+  border: 1px solid var(--bordure-forte);
+  border-radius: 8px;
+  background: var(--panneau-clair);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bouton:hover {
+  border-color: var(--texte-doux);
+}
+
+/* Moniteurs */
+
+.moniteurs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.moniteur {
+  --couleur: var(--apercu);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.moniteur-direct {
+  --couleur: var(--direct);
+}
+
+.moniteur .etiquette::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--couleur);
+}
+
+.moniteur-direct .etiquette {
+  color: var(--texte);
+}
+
+/* Les moniteurs ne font que montrer : la souris et le clavier restent dans la régie. */
+.moniteur-cadre {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--rayon);
+  background: #0a2ec7;
+  box-shadow: 0 0 0 2px var(--couleur);
+  pointer-events: none;
+}
+
+.moniteur-legende {
+  min-height: 1.4em;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.passer-direct {
+  padding: 14px 18px;
+  border: 0;
+  border-radius: var(--rayon);
+  background: var(--direct);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.passer-direct::after {
+  content: " →";
+}
+
+.passer-direct:hover {
+  filter: brightness(1.1);
+}
+
+.passer-direct:disabled {
+  background: var(--panneau-clair);
+  color: var(--texte-doux);
+  cursor: default;
+  filter: none;
+}
+
+/* Scènes */
+
+.dock {
+  padding: 14px 16px 16px;
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  background: var(--panneau);
+}
+
+.dock-entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+
+.dock-aide {
+  font-size: 13px;
+  color: var(--texte-doux);
+}
+
+.scenes {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Un palier par ligne, dans l'ordre du déroulement : le lot, le ticket tiré, le gagnant. */
+.palier {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px minmax(0, 1fr);
+  gap: 6px 8px;
+}
+
+.scene {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: var(--panneau-clair);
+  text-align: left;
+  cursor: pointer;
+}
+
+.scene:hover:not(:disabled) {
+  border-color: var(--bordure-forte);
+}
+
+.scene[aria-pressed="true"] {
+  border-color: var(--apercu);
+  background: rgb(44 98 251 / 0.22);
+  box-shadow: inset 0 0 0 1px var(--apercu);
+}
+
+.scene:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.scene-nom {
+  font-weight: 700;
+}
+
+.scene-info {
+  grid-row: 2;
+  font-size: 13px;
+  color: var(--texte-doux);
+}
+
+.scene-info:empty {
+  display: none;
+}
+
+.scene-direct {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--direct);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ticket {
+  display: grid;
+}
+
+.ticket-saisie {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--bordure-forte);
+  border-radius: 8px;
+  background: var(--fond);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texte-doux);
+  white-space: nowrap;
+  cursor: text;
+}
+
+.ticket-saisie:focus-within {
+  border-color: var(--apercu);
+}
+
+.ticket-saisie:has([aria-invalid="true"]) {
+  border-color: var(--erreur);
+}
+
+.ticket-saisie input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--texte);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-erreur {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--erreur);
+}
+
+.ticket-erreur:empty {
+  display: none;
+}
+
+/* Fenêtre étroite : les moniteurs et les colonnes d'un palier s'empilent. */
+@media (max-width: 820px) {
+  .moniteurs,
+  .palier {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ticket-saisie {
+    min-height: 48px;
+  }
+}

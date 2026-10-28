@@ -7,30 +7,23 @@ const STATUTS = {
 const REPERES = 5;
 const SUBDIVISIONS = 5;
 
-// Suspense avant l'affichage du gagnant : les numéros défilent de plus en plus lentement,
-// comme une roue de loterie qui s'arrête (environ 2 secondes au total, délais en millisecondes).
-const DEFILEMENT_DEPART = 40;
-const DEFILEMENT_FIN = 300;
-const DEFILEMENT_RALENTISSEMENT = 1.12;
-
-// Le tirage est sauvegardé dans le navigateur : un rechargement accidentel de la page
-// ne relance pas les tirages et ne remet pas en jeu les tickets déjà gagnants.
-const CLE_SAUVEGARDE = "tombola-playground";
-
 // Étape 0 : accueil, étapes 1 à N : paliers, étape N + 1 : écran de fin.
 const ETAPE_FIN = PALIERS.length + 1;
 
 const scene = document.querySelector(".scene");
 const nombre = new Intl.NumberFormat("fr-FR");
-const liste = new Intl.ListFormat("fr-FR", { type: "conjunction" });
-const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
 
-let etape = 0;
+// Cette page est pilotée par la régie (regie.html), qui l'ouvre dans une fenêtre (écran de projection)
+// ou l'intègre dans un cadre (moniteurs Aperçu et Direct). Ouverte seule, elle reste sur l'accueil.
+const regie = window.opener ?? (window.parent === window ? null : window.parent);
+
+// Affichage demandé par la régie : { etape, gagnant, palmares }
+//   etape     0 accueil, 1 à N palier, N + 1 fin
+//   gagnant   ticket gagnant affiché sur le palier, null pour ne présenter que le lot
+//   palmares  pour l'écran de fin : ticket gagnant de chaque palier, null si le lot n'a pas été tiré
+let affichageCourant = null;
+let affichageDemande = null;
 let enTransition = false;
-// Les tickets en jeu sont numérotés de 1 à dernierTicket.
-let dernierTicket = null;
-// gagnants[i] : ticket tiré pour PALIERS[i].
-let gagnants = [];
 // Nombre de tickets vendus lu dans le Google Sheet, null tant qu'il n'est pas connu.
 let ticketsVendus = null;
 
@@ -64,10 +57,6 @@ function recevoirTicketsVendus(reponse) {
   }
   ticketsVendus = valeur;
   console.info(`Google Sheet : ${valeur} tickets vendus, soit ${montantRecolte()} € récoltés.`);
-
-  // Pré-remplit la plage du tirage si l'accueil est affiché et que rien n'a encore été saisi.
-  const saisie = champ(scene, "dernier-ticket");
-  if (saisie && !saisie.disabled && saisie.value === "") saisie.value = valeur;
 }
 
 function montantRecolte() {
@@ -80,78 +69,6 @@ function statutPalier(palier) {
   const collecte = montantRecolte();
   if (palier.objectif === undefined || collecte === null) return palier.statut;
   return collecte >= palier.objectif ? "debloque" : "en-cours";
-}
-
-/* Tirage au sort
-
-   Le hasard vient de crypto.getRandomValues, le générateur cryptographique du navigateur :
-   il est imprévisible et n'utilise pas de graine, contrairement à Math.random.
-   Chaque tirage est uniforme : tous les tickets encore en jeu ont exactement la même chance.
-   Les gagnants des paliers précédents sont retirés avant chaque tirage, un ticket ne peut
-   donc gagner qu'une seule fois. Le tirage a lieu au moment de l'appui sur Espace. */
-
-// Entier uniforme entre 0 et taille - 1. Les valeurs au-delà du plus grand multiple de
-// `taille` sont rejetées : sans ce rejet, le modulo avantagerait légèrement les premiers indices.
-function indiceAuHasard(taille) {
-  const plafond = 2 ** 32 - (2 ** 32 % taille);
-  const valeur = new Uint32Array(1);
-  do {
-    crypto.getRandomValues(valeur);
-  } while (valeur[0] >= plafond);
-  return valeur[0] % taille;
-}
-
-function ticketsEnJeu() {
-  const enJeu = [];
-  for (let ticket = 1; ticket <= dernierTicket; ticket++) {
-    if (!gagnants.includes(ticket)) enJeu.push(ticket);
-  }
-  return enJeu;
-}
-
-async function tirerGagnant() {
-  const indice = etape - 1;
-  const enJeu = ticketsEnJeu();
-  gagnants[indice] = enJeu[indiceAuHasard(enJeu.length)];
-  sauvegarder();
-  console.info(`Palier ${numeroPalier(PALIERS[indice])} : ticket ${gagnants[indice]} tiré parmi ${enJeu.length} tickets en jeu.`);
-
-  const ecran = scene.firstElementChild;
-  remplirGagnant(ecran, indice);
-  ecran.classList.add("tirage");
-  await defiler(champ(ecran, "gagnant"), enJeu);
-  champ(ecran, "gagnant").textContent = gagnants[indice];
-  ecran.classList.add("revele");
-  await animationsTerminees(ecran, { subtree: true });
-}
-
-// Suspense purement visuel : le gagnant est déjà tiré et sauvegardé, les numéros qui défilent
-// sont d'autres tickets en jeu affichés au hasard et n'influencent pas le résultat.
-async function defiler(affichage, enJeu) {
-  if (mouvementReduit.matches) return;
-  for (let delai = DEFILEMENT_DEPART; delai < DEFILEMENT_FIN; delai *= DEFILEMENT_RALENTISSEMENT) {
-    affichage.textContent = enJeu[indiceAuHasard(enJeu.length)];
-    await new Promise((resoudre) => setTimeout(resoudre, delai));
-  }
-}
-
-function sauvegarder() {
-  try {
-    localStorage.setItem(CLE_SAUVEGARDE, JSON.stringify({ dernierTicket, gagnants }));
-  } catch (erreur) {
-    console.warn("Sauvegarde du tirage impossible :", erreur);
-  }
-}
-
-function restaurer() {
-  try {
-    const sauvegarde = JSON.parse(localStorage.getItem(CLE_SAUVEGARDE));
-    // Seul un tirage commencé est restauré : avant le premier gagnant, la plage est ressaisie,
-    // pré-remplie avec le nombre de tickets vendus.
-    if (sauvegarde?.gagnants.length) ({ dernierTicket, gagnants } = sauvegarde);
-  } catch (erreur) {
-    console.warn("Lecture de la sauvegarde du tirage impossible :", erreur);
-  }
 }
 
 /* Construction des écrans */
@@ -179,36 +96,13 @@ function numeroPalier(palier) {
   return String(palier.numero).padStart(2, "0");
 }
 
-function construireEcran(numeroEtape) {
-  if (numeroEtape === 0) return construireAccueil();
-  if (numeroEtape === ETAPE_FIN) return construireFin();
-  return construirePalier(numeroEtape - 1);
+function construireEcran({ etape, gagnant, palmares }) {
+  if (etape === 0) return cloner("modele-accueil");
+  if (etape === ETAPE_FIN) return construireFin(palmares);
+  return construirePalier(etape - 1, gagnant);
 }
 
-function construireAccueil() {
-  const ecran = cloner("modele-accueil");
-  const saisie = champ(ecran, "dernier-ticket");
-  saisie.value = dernierTicket ?? ticketsVendus ?? "";
-  // La plage est figée dès le premier tirage pour que tous les paliers portent sur les mêmes tickets.
-  saisie.disabled = gagnants.length > 0;
-
-  ecran.querySelector("form").addEventListener("submit", (evenement) => {
-    evenement.preventDefault();
-    const valeur = Number(saisie.value);
-    // Il faut au moins autant de tickets que de paliers pour qu'aucun ticket ne gagne deux fois.
-    if (!Number.isInteger(valeur) || valeur < PALIERS.length) {
-      champ(ecran, "erreur").textContent = `Entrer un nombre entier d'au moins ${PALIERS.length} : un ticket différent gagne à chaque palier.`;
-      return;
-    }
-    champ(ecran, "erreur").textContent = "";
-    dernierTicket = valeur;
-    sauvegarder();
-    saisie.blur();
-  });
-  return ecran;
-}
-
-function construirePalier(indice) {
+function construirePalier(indice, gagnant) {
   const palier = PALIERS[indice];
   const ecran = cloner("modele-palier");
 
@@ -237,33 +131,29 @@ function construirePalier(indice) {
 
   remplirProgression(ecran, palier, statut);
 
-  // Un palier déjà tiré réaffiche son gagnant : revenir en arrière ne relance jamais un tirage.
   champ(ecran, "gagnant-palier").textContent = numeroPalier(palier);
-  if (gagnants[indice] !== undefined) {
-    remplirGagnant(ecran, indice);
-    ecran.classList.add("tirage", "revele");
+  if (gagnant !== null) {
+    remplirGagnant(ecran, indice, gagnant);
+    ecran.classList.add("revele");
   }
   return ecran;
 }
 
-function remplirGagnant(ecran, indice) {
-  const dejaGagnants = gagnants.slice(0, indice).map((ticket) => `n° ${ticket}`);
-  let detail = `Tiré au hasard parmi ${nombre.format(dernierTicket - indice)} tickets (1 à ${nombre.format(dernierTicket)})`;
-  if (dejaGagnants.length) detail += ` · exclus car déjà gagnants : ${liste.format(dejaGagnants)}`;
-
-  champ(ecran, "gagnant").textContent = gagnants[indice];
+function remplirGagnant(ecran, indice, gagnant) {
+  champ(ecran, "gagnant").textContent = gagnant;
   champ(ecran, "gagnant-lot").textContent = PALIERS[indice].nom;
-  champ(ecran, "gagnant-tirage").textContent = detail;
 }
 
-function construireFin() {
+// Un lot qui n'a pas été tiré (palier non débloqué, par exemple) n'apparaît pas au palmarès.
+function construireFin(palmares) {
   const ecran = cloner("modele-fin");
   champ(ecran, "palmares").append(
-    ...PALIERS.map((palier, indice) => {
+    ...PALIERS.flatMap((palier, indice) => {
+      if (palmares[indice] === null) return [];
       const ticket = element("li", "", "ticket");
       ticket.append(
         element("span", `Palier ${numeroPalier(palier)}`),
-        element("strong", `n° ${gagnants[indice]}`),
+        element("strong", `n° ${palmares[indice]}`),
         element("span", palier.nom),
       );
       return ticket;
@@ -347,53 +237,42 @@ function animationsTerminees(cible, options) {
   return Promise.allSettled(animations.map((animation) => animation.finished));
 }
 
-// Les appuis reçus pendant une transition ou un tirage sont ignorés.
-async function sansInterruption(action) {
+// Un affichage reçu pendant une transition ne l'interrompt pas : le dernier reçu est appliqué ensuite.
+async function demanderAffichage(affichage) {
+  affichageDemande = affichage;
   if (enTransition) return;
   enTransition = true;
   try {
-    await action();
+    while (JSON.stringify(affichageDemande) !== JSON.stringify(affichageCourant)) {
+      const cible = affichageDemande;
+      await passerA(cible);
+      affichageCourant = cible;
+    }
   } finally {
     enTransition = false;
   }
 }
 
-function afficherEcran() {
-  scene.replaceChildren(construireEcran(etape));
-  if (etape === 0 && dernierTicket === null) champ(scene, "dernier-ticket").focus();
+// Le gagnant du palier déjà affiché apparaît par-dessus le lot, sans changer d'écran.
+function passerA(affichage) {
+  const revelation =
+    affichageCourant?.etape === affichage.etape && affichageCourant.gagnant === null && affichage.gagnant !== null;
+  return revelation ? revelerGagnant(affichage) : afficher(affichage);
 }
 
-async function afficher(nouvelleEtape) {
+async function afficher(affichage) {
   scene.classList.add("sortie");
   await animationsTerminees(scene);
-  etape = nouvelleEtape;
   scene.classList.remove("sortie");
-  afficherEcran();
+  scene.replaceChildren(construireEcran(affichage));
   await animationsTerminees(scene, { subtree: true });
 }
 
-function avancer() {
-  if (etape === 0 && dernierTicket === null) {
-    champ(scene, "dernier-ticket").focus();
-    return;
-  }
-  const tirageAFaire = etape > 0 && gagnants[etape - 1] === undefined;
-  sansInterruption(tirageAFaire ? tirerGagnant : () => afficher(etape + 1));
-}
-
-// Effacer les gagnants demande deux appuis sur R pour éviter une remise à zéro accidentelle pendant la soirée.
-function demanderEffacement() {
+async function revelerGagnant({ etape, gagnant }) {
   const ecran = scene.firstElementChild;
-  if (!ecran.hasAttribute("data-confirmation")) {
-    ecran.setAttribute("data-confirmation", "");
-    return;
-  }
-  sansInterruption(() => {
-    gagnants = [];
-    dernierTicket = null;
-    sauvegarder();
-    return afficher(0);
-  });
+  remplirGagnant(ecran, etape - 1, gagnant);
+  ecran.classList.add("revele");
+  await animationsTerminees(ecran, { subtree: true });
 }
 
 function basculerPleinEcran() {
@@ -401,33 +280,27 @@ function basculerPleinEcran() {
   else document.documentElement.requestFullscreen();
 }
 
-function saisieEnCours(cible) {
-  return cible.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(cible.tagName);
-}
-
 document.addEventListener("keydown", (evenement) => {
   if (evenement.repeat || evenement.ctrlKey || evenement.metaKey || evenement.altKey) return;
-  if (saisieEnCours(evenement.target)) return;
-
-  const touche = evenement.key.toLowerCase();
-  if (touche !== "r") scene.firstElementChild.removeAttribute("data-confirmation");
-
-  if ((touche === " " || touche === "arrowright") && etape < ETAPE_FIN) {
-    evenement.preventDefault();
-    avancer();
-  } else if (touche === "arrowleft" && etape > 0) {
-    evenement.preventDefault();
-    sansInterruption(() => afficher(etape - 1));
-  } else if (touche === "f") {
-    basculerPleinEcran();
-  } else if (touche === "r" && (etape === ETAPE_FIN || (etape === 0 && gagnants.length > 0))) {
-    demanderEffacement();
-  }
+  if (evenement.key.toLowerCase() === "f") basculerPleinEcran();
 });
+
+/* Liaison avec la régie
+
+   Les deux fenêtres communiquent par postMessage : c'est le seul canal qui fonctionne dans tous
+   les navigateurs quand les pages sont ouvertes depuis le disque (Firefox isole alors le localStorage
+   de chaque fichier). Au chargement, la page demande à la régie ce qu'elle doit afficher. */
+
+addEventListener("message", (evenement) => {
+  if (evenement.source === regie) demanderAffichage(evenement.data);
+});
+
+// Prévient la régie que l'écran de projection est fermé ou rechargé.
+addEventListener("pagehide", () => regie?.postMessage("ferme", "*"));
 
 // Précharge les images pour qu'elles soient prêtes au moment de leur entrée en scène.
 for (const palier of PALIERS) new Image().src = palier.image;
 
-restaurer();
-afficherEcran();
+if (regie && !regie.closed) regie.postMessage("pret", "*");
+else demanderAffichage({ etape: 0, gagnant: null, palmares: [] });
 chargerTicketsVendus();

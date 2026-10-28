@@ -63,15 +63,6 @@ figure {
   margin: 0;
 }
 
-kbd {
-  display: inline-block;
-  margin: 0 0.5rem;
-  padding: 0.4rem 1rem;
-  border: 1px solid currentColor;
-  border-radius: 0.5rem;
-  font: inherit;
-}
-
 /* Fond */
 
 .fond {
@@ -272,24 +263,6 @@ kbd {
   text-transform: none;
 }
 
-/* Seule indication affichée : la demande de confirmation après un premier appui sur R. */
-.indication {
-  position: absolute;
-  bottom: var(--bas);
-  display: none;
-  padding: 0.6rem 1.6rem;
-  border-radius: 99rem;
-  background: var(--blanc);
-  color: var(--bleu-royal);
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-}
-
-[data-confirmation] .indication {
-  display: block;
-}
-
 .fin-merci {
   font-size: 10rem;
 }
@@ -306,52 +279,6 @@ kbd {
   font-weight: 700;
   letter-spacing: 0.3em;
   color: var(--bleu-glace);
-}
-
-.plage {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 1.2rem;
-  margin-top: 3rem;
-  font-size: 1.4rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-}
-
-.plage input {
-  width: 4.5em;
-  padding: 0 0 0.3rem;
-  border: 0;
-  border-bottom: 0.2rem solid rgb(255 255 255 / 0.6);
-  outline: none;
-  background: transparent;
-  color: var(--blanc);
-  font: inherit;
-  font-size: 3.4rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  text-align: center;
-  caret-color: var(--bleu-glace);
-  cursor: text;
-}
-
-.plage input:focus {
-  border-bottom-color: var(--blanc);
-}
-
-.plage input:disabled {
-  border-bottom-color: transparent;
-  color: var(--blanc);
-  -webkit-text-fill-color: var(--blanc);
-}
-
-.plage-erreur {
-  min-height: 1.6rem;
-  margin-top: 0.8rem;
-  font-size: 1.15rem;
-  font-weight: 700;
-  text-transform: none;
 }
 
 .palmares {
@@ -733,13 +660,13 @@ kbd {
     scale var(--duree-sortie) ease-out;
 }
 
-.palier.tirage :is(.palier-infos, .lot, .progression) {
+.palier.revele :is(.palier-infos, .lot, .progression) {
   opacity: 0.12;
   scale: 0.97;
 }
 
 /* Même atténuée, la pastille blanche resterait lisible sous le titre du gagnant. */
-.palier.tirage .pastille {
+.palier.revele .pastille {
   visibility: hidden;
 }
 
@@ -754,7 +681,7 @@ kbd {
   text-transform: uppercase;
 }
 
-.palier.tirage .gagnant {
+.palier.revele .gagnant {
   display: flex;
 }
 
@@ -846,10 +773,6 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-.palier.tirage:not(.revele) .ticket-numero {
-  opacity: 0.45;
-}
-
 .revele .ticket-numero {
   animation: impact 600ms var(--courbe-rebond);
 }
@@ -857,18 +780,6 @@ kbd {
 .gagnant-lot {
   font-size: 3rem;
   font-weight: 800;
-}
-
-.gagnant-tirage {
-  margin-top: 1rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--bleu-glace);
-  text-transform: none;
-}
-
-.palier:not(.revele) .apres-tirage {
-  visibility: hidden;
 }
 
 .revele .apres-tirage {
